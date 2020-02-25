@@ -1,0 +1,86 @@
+
+library(data.table)
+library(ggplot2)
+library(ggpubr)
+
+# new york city 
+
+amount <- c(3, 2, 5, 25, 65)
+Source <- c("Other", "Renewables", "Hydropower", "Nuclear", "Fossil Fuels")
+data <- data.table(amount, Source)
+data[, label := paste(amount, "%", sep="")]
+
+ggdonutchart(data, x="amount",  label = "label", 
+             fill = "Source", color = "white", lab.adjust = 0, 
+             lab.pos = "out", lab.font = c(size=3), 
+             palette = "viridis") + theme(legend.position="right",
+                                          panel.grid.major.y = element_blank(), 
+                                          panel.grid.major.x = element_blank(),
+                                          panel.grid.minor.x = element_blank(),
+                                          panel.grid.minor.y = element_blank(),
+                                          text = element_text(family = "Open Sans"),
+                                          plot.title = element_text(family = "Georgia",size = 14)) +
+  labs(title = "       New York City Energy Consumption, 2017",
+       subtitle = "",
+       caption = "Source: Mayor's Office of Sustainability")
+
+# new york state
+# https://www.eia.gov/state/?sid=NY
+
+nys_ec <- fread("nys_ec.csv")
+nys <- nys_ec[-c(1:3), ]
+names(nys) <- c("type", "amount")
+nys[, amount := as.numeric(amount)]
+group_1 <- c("Net Interstate Flow of Electricity", "Net Electricity Imports") 
+fossils <- c("Natural Gas", "Motor Gasoline excl. Ethanol", "Other Petroleum", "Distillate Fuel Oil", "HGL", "Jet Fuel", "Residual Fuel")
+nys <- nys[type %in% group_1, type := "Other"]
+nys[type %in% fossils, type := "Fossil Fuels"]
+nys[type %in% c("Other Renewables", "Biomass"), type := "Renewables"]
+nys[type %in% "Nuclear Electric Power", type := "Nuclear"]
+nys[type %in% "Hydroelectric Power", type := "Hydropower"]
+
+nys[, amount := sum(amount), by = "type"]
+nys <- unique(nys)
+nys[, tot_amt := sum(amount)]
+nys[, amount := amount/tot_amt, by = "type"]
+nys[, amount := round(amount, 2)*100]
+nys[, label := paste(amount, "%", sep = "")]
+nys[, Source := type]
+
+ggdonutchart(nys, x="amount",  label = "label", 
+             fill = "Source", color = "white", lab.adjust = 0, 
+             lab.pos = "out", lab.font = c(size=10), 
+             palette = "") + theme(legend.position="right",
+                                   panel.grid.major.y = element_blank(), 
+                                   panel.grid.major.x = element_blank(),
+                                   panel.grid.minor.x = element_blank(),
+                                   panel.grid.minor.y = element_blank(),
+                                   text = element_text(family = "Open Sans"),
+                                   plot.title = element_text(family = "Georgia",size = 14)) +
+  labs(title = "       New York State Energy Consumption, 2017",
+       subtitle = "",
+       caption = "Source: Energy Information Administration, \nState Energy Data System")
+
+
+
+#### us
+
+# Us annual 
+amount <- c(36, 11, 8, 13, 31)
+Source <- c("Petroleum", "Renewables", "Nuclear", "Coal", "Natural Gas")
+data <- data.table(amount, Source)
+data[, label := paste(amount, "%", sep="")]
+
+ggdonutchart(data, x="amount",  label = "label", 
+             fill = "Source", color = "white", lab.adjust = 0, 
+             lab.pos = "out", lab.font = c(size=3), 
+             palette = "viridis") + theme(legend.position="right",
+                                          panel.grid.major.y = element_blank(), 
+                                          panel.grid.major.x = element_blank(),
+                                          panel.grid.minor.x = element_blank(),
+                                          panel.grid.minor.y = element_blank(),
+                                          text = element_text(family = "Open Sans"),
+                                          plot.title = element_text(family = "Georgia",size = 14)) +
+  labs(title = "      US Energy Consumption, 2018",
+       subtitle = "",
+       caption = "Source: Energy Information Administration, \nEnergy Data System")
