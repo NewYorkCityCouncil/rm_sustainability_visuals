@@ -131,31 +131,31 @@ ggsave("Greenland Ice Mass.png", plot = p, path = "/Users/romartinez/Desktop/ssh
 # HDR* 9 GMSL (Global Isostatic Adjustment (GIA) applied) variation (mm) )  with respect to 20-year mean
 # HDR 10 standard deviation of GMSL (GIA applied) variation estimate (mm)
 # HDR* 11 smoothed (60-day Gaussian type filter) GMSL (GIA applied) variation (mm) )  with respect to 20-year mean
+# Use this Column below!!!!!!
 # HDR* 12 smoothed (60-day Gaussian type filter) GMSL (GIA applied) variation (mm); annual and semi-annual signal removed )  with respect to 20-year mean
-satsealevel=read.delim("/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/data/GlobalMeanSeaLevel_TPJAOS_4.2_199209_201911.txt", sep = "", header = FALSE)
+satsealevel=read.delim("/Users/romartinez/Desktop/untitled_folder/Data_Products/rm_sustainability_visuals/data/GlobalMeanSeaLevel_TPJAOS_4.2_199209_201911.txt", sep = "", header = FALSE)
 
 satsealevel=satsealevel[-c(1:54), -c(13:20)]
 names(satsealevel)<- c("altimeter_type", "filecyclenum", "Year_Decimal", "Observations", "Weights_Obs", "GMSL_nGIA", "SD_GMSL_nGIA", "GMSL_sm_nGIA", "GMSL_wGIA", "SD_GMSL_wGIA", "GMSL_sm_wGIA","add_GMSL_sm_wGIA")
 
-satsealevel$Year= substr(satsealevel$Year_Decimal, 1, 4)
-satsealevel$GMSL_wGIA=as.numeric(as.character(satsealevel$GMSL_wGIA))
-
-mean(satsealevel[which(satsealevel$Year=="1993"),]$GMSL_wGIA)
-
-for (i in 1:nrow(satsealevel)) {
-  satsealevel$firstcycle1993[i]= (as.numeric(as.character(satsealevel$GMSL_wGIA[i+1])) - as.numeric(as.character(satsealevel$GMSL_wGIA[i])))/as.numeric(as.character(satsealevel$GMSL_wGIA[i])) *100
-}
-# need help with calculation -----------
-
+satsealevel$Year= as.integer(substr(satsealevel$Year_Decimal, 1, 4))
+satsealevel$Year[duplicated(satsealevel$Year)] <- ""
+satsealevel$add_GMSL_sm_wGIA=as.numeric(as.character(satsealevel$add_GMSL_sm_wGIA))
+satsealevel$ref1993=satsealevel$add_GMSL_sm_wGIA-satsealevel$add_GMSL_sm_wGIA[1]
+#label
+satsealevel$label=rep("", nrow(satsealevel))
+satsealevel$label[nrow(satsealevel)] <-"94.6 mm (9/13/19)"
 #plot
+
 p <- satsealevel %>%
-  ggplot(aes(x=Year_Decimal, y=Mass)) + 
+  ggplot(aes(x=Year_Decimal, y=ref1993)) + 
   xlab("Year") + ylab("Sea Height Variation (mm)")+
-  geom_line(color="grey") +
-  # geom_text(# Filter data first
-  #  aes(label=label), nudge_y = 50) +
-  geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=1) +
+  #geom_line(color="grey") +
+  geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=0.5) +
   geom_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6") +
+  scale_x_discrete(waiver(), 
+                   breaks = waiver(), 
+                   labels = satsealevel$Year) +
   theme_ipsum(axis_title_just = "mc", 
               base_size = 8,
               axis_title_size = 11) +
@@ -168,11 +168,12 @@ p <- satsealevel %>%
         axis.text.x = element_text(angle = 90),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))+
+  geom_text(aes(label=label), size =3.5, vjust= -0.3, hjust=1.05 ) +
   ggtitle("Sea Level Rise",
-          paste("Global Sea Level Mean Rising 3.3 mm per year")) +
-  labs(tag = "Figure 3.", caption = "Satellite sea level observations, NASA Goddard Space Flight Center.")
+          paste("Global mean sea level is rising 3.3 mm per year")) +
+  labs(tag = "Figure 2.", caption = "Satellite sea level observations, NASA Goddard Space Flight Center.")
 
-ggsave("Sea Level Satellite Observations.png", plot = p, path = "/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
+ggsave("Sea Level Satellite Observations.png", plot = p, path = "/Users/romartinez/Desktop/untitled_folder/Data_Products/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 
