@@ -5,6 +5,8 @@ library(ggpubr)
 
 # new york city 
 
+cols <- c("#D05D4E","#F59F00","#228AE6","#12B886","#23417D","#A07952","#82C91E","#CACACA","#2F56A6","#BE4BDB")
+
 amount <- c(3, 2, 5, 25, 65)
 Source <- c("Other", "Renewables", "Hydropower", "Nuclear", "Fossil Fuels")
 data <- data.table(amount, Source)
@@ -12,22 +14,23 @@ data[, label := paste(amount, "%", sep="")]
 
 ggdonutchart(data, x="amount",  label = "label", 
              fill = "Source", color = "white", lab.adjust = 0, 
-             lab.pos = "out", lab.font = c(size=3), 
-             palette = "viridis") + theme(legend.position="right",
+             lab.pos = "out", lab.font = c(size=3)) + 
+                                          theme(legend.position="right",
                                           panel.grid.major.y = element_blank(), 
                                           panel.grid.major.x = element_blank(),
                                           panel.grid.minor.x = element_blank(),
                                           panel.grid.minor.y = element_blank(),
                                           text = element_text(family = "Open Sans"),
                                           plot.title = element_text(family = "Georgia",size = 14)) +
+  scale_fill_manual(values=cols) +
   labs(title = "       New York City Energy Consumption, 2017",
        subtitle = "",
-       caption = "Source: Mayor's Office of Sustainability")
+       caption = "Source: NYC Mayor's Office of Sustainability")
 
 # new york state
 # https://www.eia.gov/state/?sid=NY
 
-nys_ec <- fread("nys_ec.csv")
+nys_ec <- fread("data/nys_ec.csv")
 nys <- nys_ec[-c(1:3), ]
 names(nys) <- c("type", "amount")
 nys[, amount := as.numeric(amount)]
@@ -57,6 +60,7 @@ ggdonutchart(nys, x="amount",  label = "label",
                                    panel.grid.minor.y = element_blank(),
                                    text = element_text(family = "Open Sans"),
                                    plot.title = element_text(family = "Georgia",size = 14)) +
+  scale_fill_manual(values=cols) +
   labs(title = "       New York State Energy Consumption, 2017",
        subtitle = "",
        caption = "Source: Energy Information Administration, \nState Energy Data System")
@@ -81,6 +85,7 @@ ggdonutchart(data, x="amount",  label = "label",
                                           panel.grid.minor.y = element_blank(),
                                           text = element_text(family = "Open Sans"),
                                           plot.title = element_text(family = "Georgia",size = 14)) +
+  scale_fill_manual(values=cols) +
   labs(title = "      US Energy Consumption, 2018",
        subtitle = "",
        caption = "Source: Energy Information Administration, \nEnergy Data System")
