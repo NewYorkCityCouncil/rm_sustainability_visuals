@@ -243,7 +243,7 @@ totals <- w2017 %>%
   group_by(year) %>%
   summarize(Landfill = round(sum(refusetonscollected,na.rm = TRUE),2), 
             Paper = round(sum(papertonscollected,na.rm = TRUE),2),
-            Recyclables= round(sum(mgptonscollected,na.rm = TRUE),2),
+            `Metal, Glass, Plastics`= round(sum(mgptonscollected,na.rm = TRUE),2),
             `Xmas Trees`= round(sum(xmastreetons,na.rm = TRUE),2),
             `Res. Organics`= round(sum(resorganicstons,na.rm = TRUE),2),
             `School Organics`= round(sum(schoolorganictons,na.rm = TRUE),2),
@@ -252,7 +252,7 @@ totals <- w2017 %>%
 
 t2 <- data.frame(
   name=colnames(totals) ,  
-  value=c(totals$year, totals$Landfill, totals$Paper, totals$Recyclables, totals$`Xmas Trees`, totals$`Res. Organics`, totals$`School Organics`, totals$`Leaves Organics`)
+  value=c(totals$year, totals$Landfill, totals$Paper, totals$`Metal, Glass, Plastics`, totals$`Xmas Trees`, totals$`Res. Organics`, totals$`School Organics`, totals$`Leaves Organics`)
 )
 
 t2=t2[-1,]
@@ -285,7 +285,7 @@ p <- t2 %>%
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
   ggtitle("NYC Waste Composition in 2017",
-          paste("Trash going to landfill made 80% of NYC's waste in 2017")) +
+          paste("80% of NYC's waste went to landfill in 2017")) +
   labs(caption = "DSNY Monthly Tonnage Data")
 
 ggsave("/visuals/waste_2017.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
