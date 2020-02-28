@@ -3,6 +3,8 @@ library(dplyr)
 library(hrbrthemes)
 library(scales)
 library(weathermetrics)
+library(RSocrata)
+#library(networkD3)
 
 options(scipen = 999)
 # SOC SUSTAINABILITY - BACKGROUND SECTION: EVIDENCE OF CLIMATE CHANGE --------------
@@ -217,6 +219,84 @@ ggsave("/visuals/Artic Sea Ice Min.png", plot = p, path = getwd(), width = 8.5, 
 
 
 
+
+
+# How much waste is NYC producing in 2017?-------
+
+w=read.socrata('https://data.cityofnewyork.us/resource/ebb7-mvp5.json?$limit=99999999')
+w$year<-as.integer(substr(w$month, 1, 4))
+w$mo<- as.integer(substr(w$month, 8, 9))
+
+w$date <- as.Date(paste(w$mo, "01", w$year), format='%m %d %Y')
+w$refusetonscollected=as.numeric(w$refusetonscollected)
+w$papertonscollected=as.numeric(w$papertonscollected)
+w$mgptonscollected=as.numeric(w$mgptonscollected)
+w$xmastreetons=as.numeric(w$xmastreetons)
+w$leavesorganictons=as.numeric(w$leavesorganictons)
+w$resorganicstons=as.numeric(w$resorganicstons)
+w$schoolorganictons=as.numeric(w$schoolorganictons)
+
+w2017<-w[w$year==2017,]
+
+
+totals <- w2017 %>%
+  group_by(year) %>%
+  summarize(Landfill = round(sum(refusetonscollected,na.rm = TRUE),2), 
+            Paper = round(sum(papertonscollected,na.rm = TRUE),2),
+            `Metal, Glass, Plastics`= round(sum(mgptonscollected,na.rm = TRUE),2),
+            `Xmas Trees`= round(sum(xmastreetons,na.rm = TRUE),2),
+            `Res. Organics`= round(sum(resorganicstons,na.rm = TRUE),2),
+            `School Organics`= round(sum(schoolorganictons,na.rm = TRUE),2),
+            `Leaves Organics`= round(sum(schoolorganictons,na.rm = TRUE),2)
+            )
+
+t2 <- data.frame(
+  name=colnames(totals) ,  
+  value=c(totals$year, totals$Landfill, totals$Paper, totals$`Metal, Glass, Plastics`, totals$`Xmas Trees`, totals$`Res. Organics`, totals$`School Organics`, totals$`Leaves Organics`)
+)
+
+t2=t2[-1,]
+t2=t2[order(t2$value, decreasing = TRUE),]
+
+t2$percent=round(t2$value/sum(t2$value)*100,2)
+  
+cols <- c("#D05D4E","#F59F00","#228AE6","#12B886","#23417D","#A07952","#82C91E","#CACACA","#2F56A6","#BE4BDB")
+#plot
+#ggplot(aes(x=reorder(t2$name, t2$percent), y=sort(t2$percent, decreasing = TRUE),
+p <- t2 %>% 
+  ggplot(aes(x=reorder(t2$name, t2$percent), y=sort(t2$percent, decreasing = TRUE),
+             fill=as.factor(name))) + 
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values=cols) +
+  xlab("Tonnage") + ylab("Material")+
+  geom_text(# Filter data first
+    aes(label=paste0(percent, '%')), nudge_y = 5, size=3) +
+  theme_ipsum(axis_title_just = "mc", 
+              base_size = 8,
+              axis_title_size = 11,
+              axis_text_size = 10) +
+  theme(legend.position="none",
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        text = element_text(family = "Open Sans"),
+        plot.title = element_text(family = "Georgia",size = 14),
+        axis.text.y = element_text(margin = margin(t = 0, r = -16, b = 0, l = 0)),
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
+  ggtitle("NYC Waste Composition in 2017",
+          paste("80% of NYC's waste went to landfill in 2017")) +
+  labs(caption = "DSNY Monthly Tonnage Data")
+
+ggsave("/visuals/waste_2017.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
+
+# #sankey version
+# #
+# #links <- data.frame(
+# source=rep("Total Waste Produced", 7)
+# target=c("group_C","group_D", "group_E", "group_F", "group_G", "group_H"), 
+# value=c(2,3, 2, 3, 1, 3)
+# )
 
 # theme setting ---------------
 # theme_ipsum(base_family = "Arial Narrow", base_size = 11.5,
