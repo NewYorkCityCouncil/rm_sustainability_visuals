@@ -53,9 +53,9 @@ p <- glotemp %>%
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
   ggtitle("Global Temperature Rise",
           paste("How much warmer than average the most recent year was globally")) +
-  labs(tag = "Figure 2.", caption = "NASA's Goddard Institute for Space Studies (GISS)")
+  labs(caption = "NASA's Goddard Institute for Space Studies (GISS)")
 
-ggsave("Global Temperature Rise.png", plot = p, path = "/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
+ggsave("/visuals/Global Temperature Rise.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 # greenland ice mass ------
@@ -71,31 +71,34 @@ aicemass=read.delim("/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/d
 # HDR 1 TIME (year.decimal)
 # HDR 2 Greenland mass (Gigatonnes)
 # HDR 3 Greenland mass 1-sigma uncertainty (Gigatonnes)
-grlicemass=read.delim("/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/data/greenland_mass_200204_201911.txt", sep = "", header = FALSE)
+grlicemass=read.delim(paste0(getwd(),"/data/greenland_mass_200204_201911.txt"), sep = "", header = FALSE)
 
 grlicemass=grlicemass[-c(1:36),-c(4:20)]
+row.names(grlicemass) <- NULL
 names(grlicemass)<- c("Year", "Mass", "Uncertainty")
 grlicemass$Mass <-as.numeric(as.character(grlicemass$Mass))
-grlicemass$Year <-as.integer(as.character(grlicemass$Year))
-row.names(grl) <- NULL
+grlicemass$Year <-as.numeric(as.character(grlicemass$Year))
 
-# grlicemass$label<-rep("", nrow(grlicemass))
-# grlicemass[c(seq(7,67,12),76,seq(87,122,9),seq(123,133,5)),]$label <-seq(2006,2019, 1)
-# grlicemass[1,]$label<-2005
+
+ #grlicemass$label<-rep("", nrow(grlicemass))
+ #grlicemass[c(seq(7,67,12),76,seq(87,122,9),seq(123,133,5)),]$label <-seq(2006,2019, 1)
+ grlicemass$label= as.integer(substr(grlicemass$Year, 1, 4))
+ grlicemass$label[duplicated(grlicemass$label)] <- ""
 
 
 #plot
 p <- grlicemass %>%
   ggplot(aes(x=Year, y=Mass)) + 
   xlab("Year") + ylab("Mass (Gt)")+
-  #geom_line(color="grey") +
+  #geom_line(color="#2F56A6", size=1) +
   #geom_text(# Filter data first
   #  aes(label=label), nudge_y = 50) +
   geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=1) +
   scale_x_continuous(waiver(), 
                      breaks = as.numeric(grlicemass$label), 
-                     labels = as.numeric(grlicemass$label), limits=c(2005,2019)) +
-  geom_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6") +
+                     labels = as.numeric(grlicemass$label), limits=c(2002,2019)) +
+  geom_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6", 
+              mapping = aes(weight = as.numeric(as.character(Uncertainty)))) +
   theme_ipsum(axis_title_just = "mc", 
               base_size = 8,
               axis_title_size = 11,
@@ -111,9 +114,9 @@ p <- grlicemass %>%
         axis.text.x = element_text(angle = 90))+
   ggtitle("Greenland Ice Mass Variaton Since 2002",
           "Ice Mass Loss of 283.0 Gigatonnes per year") +
-  labs(tag = "Figure 3.", caption = "Ice mass measurement by NASA's GRACE satellites.")
+  labs(caption = "Ice mass measurement by NASA's GRACE satellites.")
 
-ggsave("Greenland Ice Mass.png", plot = p, path = "/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
+ggsave("/visuals/Greenland Ice Mass.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 
@@ -171,9 +174,9 @@ p <- satsealevel %>%
   geom_text(aes(label=label), size =3.5, vjust= -0.3, hjust=1.05 ) +
   ggtitle("Sea Level Rise",
           paste("Global mean sea level is rising 3.3 mm per year")) +
-  labs(tag = "Figure 2.", caption = "Satellite sea level observations, NASA Goddard Space Flight Center.")
+  labs(caption = "Satellite sea level observations, NASA Goddard Space Flight Center.")
 
-ggsave("Sea Level Satellite Observations.png", plot = p, path = "/Users/romartinez/Desktop/untitled_folder/Data_Products/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
+ggsave("/visuals/Sea Level Satellite Observations.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 
@@ -207,9 +210,9 @@ p <- artic_sea_ice_min %>%
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))+
   ggtitle("Arctic Sea Ice Minimum",
           paste("The Average September Arctic Sea Ice Extent is Declining 12.85% every Decade")) +
-  labs(tag = "Figure 5.", caption = "Satellite observations, NSIDC/NASA")
+  labs(caption = "Satellite observations, NSIDC/NASA")
 
-ggsave("Artic Sea Ice Min.png", plot = p, path = "/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
+ggsave("/visuals/Artic Sea Ice Min.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 

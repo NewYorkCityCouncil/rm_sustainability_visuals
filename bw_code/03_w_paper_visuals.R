@@ -96,28 +96,42 @@ annual_precip <- as_tibble(precip) %>%
   mutate(year = as.numeric(year),
          annual = as.numeric(annual))
 
-ggplot(annual_precip, aes(x=year, y=annual)) +
-  geom_point() +
-  geom_smooth(se = FALSE) +
-  ylab("Annual Precipitation (Inches)") +
-  xlab("Year") +
-  # theme_ipsum(axis_title_just = "mc", 
-  #             base_size = 8,
-  #             axis_title_size = 11,
-  #             axis_text_size = 10) +
+annual_precip$year_label=rep("", nrow(annual_precip))
+annual_precip[which(annual_precip$year %in% seq(1870,2019, 10)),]$year_label <- seq(1870,2019, 10)
+annual_precip[annual_precip$year==2019,]$year_label <- "2019"
+
+p <- annual_precip %>%
+  ggplot(aes(x=year, y=annual)) + 
+  xlab("Year") + ylab("Annual Precipitation  (Inches)") +
+  #geom_line(color="grey") +
+  # geom_text(# Filter data first
+  #  aes(label=label), nudge_y = 50) +
+  geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=1) +
+  geom_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6") +
+  scale_x_continuous(waiver(),
+                    breaks = as.numeric(annual_precip$year_label),
+                    labels = as.numeric(annual_precip$year_label), limits=c(1870,2019)) +
+  #scale_y_continuous(limit=c(-1,NA),
+  #                   oob=squish,
+  #                   breaks=seq(-1,2,0.5),
+   #                  labels=seq(-1,2,0.5))+
+  theme_ipsum(axis_title_just = "mc", 
+              base_size = 8,
+              axis_title_size = 11,
+              axis_text_size = 10) +
   theme(legend.position="none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
-        #text = element_text(family = "Open Sans"),
+        text = element_text(family = "Open Sans"),
         plot.title = element_text(family = "Georgia",size = 14),
         axis.text.x = element_text(angle = 90),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
-  ggtitle("Global Temperature Rise",
-          paste("How much warmer than average the most recent year was globally")) +
-  labs(tag = "Figure 2.", caption = "NASA's Goddard Institute for Space Studies (GISS)")
+  ggtitle("Annual Precipitation in New York City from 1870-2019",
+          paste("Precipitation is increasing 0.76 inches per decade")) +
+  labs(caption = "Source: https://www.weather.gov/media/okx/Climate/CentralPark/monthlyannualprecip.pdf")
 
-ggsave("Global Temperature Rise.png", plot = p, path = "/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
+ggsave("/visuals/NYC Precipitation Increase.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 
