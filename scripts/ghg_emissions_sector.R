@@ -18,7 +18,6 @@ long_ghg[, value := as.numeric(value)]
 ghg_sub <- long_ghg[, .(value, Year, Sector)]
 ghg_sub[, value := sum(value), by = c("Year", "Sector")]
 ghg_sub[, value := value/1000000]
-ghg_sub[, value := value/10]
 
 ghg_sub=unique(ghg_sub)
 
