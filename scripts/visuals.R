@@ -347,7 +347,7 @@ ggsave("/visuals/waste_2017.png", plot = p, path = getwd(), width = 8.5, height 
 
 links <- data.frame(
   source=c(rep("NYC Waste", 7),rep(as.vector(t2$name[1]),6)),
-  target=c(as.vector(t2$name), "Organics", "*Other",'Paper ',"Metal, Glass, Plastic, Cartons", "Textiles", "Divertable Materials"),
+  target=c(as.vector(t2$name), "Organics", "*Other",'Paper ',"Metal, Glass, Plastics, Cartons ", "Textiles", "Other Divertable Materials"),
   value=c(t2$percent, 34,23,17,17,6,3)
 )
 
@@ -376,7 +376,7 @@ my_color <- 'd3.scaleOrdinal() .domain(["LF_grey","RD_green", "Total", "LF_dgrey
 
 ## Add text to label
 links$per <- paste0(links$value, "%")
-nodes$txt<- c(paste(as.vector(nodes$name[1]),'3.1 tons', sep = ": "),
+nodes$txt<- c(paste(as.vector(nodes$name[1]),'3.1 million tons', sep = ": "),
               paste(as.vector(nodes$name[2:nrow(nodes)]),
                     links$per, sep = ": "))
 
@@ -412,11 +412,11 @@ p <-
   )
 p
 p <- htmlwidgets::prependContent(p, htmltools::tags$div(HTML(
-  paste(tags$span(style="font-family:Georgia;font-size:16px;font-weight: bold;", "NYC's Waste Composition & Potential for Landfill Diversion"), sep = ""))))
+  paste(tags$span(style="font-family:Georgia;font-size:16px;font-weight: bold;", "NYC's Residential Waste Composition & Potential for Landfill Diversion"), sep = ""))))
 p<-htmlwidgets::appendContent(p,htmltools::tags$div(
   HTML(paste(tags$span(style="font-family:Open Sans; font-size:12px; font-style: italic;", "DSNY Monthly Tonnage Data, 2017 NYC Residential, School, and NYCHA Waste Characterization Study"), 
              "<br>", 
-             tags$span(style="font-family:Open Sans; font-size:10px;", "*Other: Items that currently have no or limited beneficial use."), sep = ""))))
+             tags$span(style="font-family:Open Sans; font-size:10px;", "*Other: Items that currently have no or limited options for beneficial reuse"), sep = ""))))
 
 p
 saveWidget(p,file=paste0(getwd(),"/visuals/waste_flow.html"))
@@ -549,7 +549,6 @@ ggtitle("NYC Waste Per Capita from 2000 to 2019",
 
 ggsave("/visuals/Global Temperature Rise.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 # for gqis mapping ------
-# Notes -------------------------------------------------------------------
 
 library(raster)
 library(rgdal) # for spTransform
@@ -588,127 +587,24 @@ nyc1 <- st_transform(nyc, projection(august_30_19_raster))
 august_30_19_masked <- mask(august_30_19_raster, nyc1)
 august_30_19_cropped <- crop(august_30_19_masked, nyc1)
 
+
 july_10_18_masked <- mask(august_30_19_raster, nyc1)
 july_10_18_cropped <- crop(july_10_18_masked, nyc1)
 
 sept_22_19_masked <- mask(august_30_19_raster, nyc1)
 sept_22_19_cropped <- crop(sept_22_19_masked, nyc1)
 
-
-
-# Convert raster to Sf
-august_30_19_sf <- rasterToPoints(august_30_19_cropped, spatial = TRUE) %>%
-  as_tibble() %>% 
-  mutate(date = mdy("08-30-2019"))
-
-
-july_10_18_sf <- rasterToPoints(july_10_18_cropped, spatial = TRUE) %>%
-  as_tibble() %>% 
-  mutate(date = mdy("07-10-2018"))
-
-sept_22_19_sf <- rasterToPoints(sept_22_19_cropped, spatial = TRUE) %>%
-  as_tibble() %>% 
-  mutate(date = mdy("09-22-2019"))
-
-
-# Converting Kelving to Fahrenheit
-k_to_f <- function(temp) { fahrenheight <- ((temp - 273) * (9/5)) + 32  }
-
-
-
-# Merge sfs
-
-collected_sf <- rbind(august_30_19_sf, july_10_18_sf, sept_22_19_sf) %>% 
-  mutate(coords = paste0(as.character(x),", ", as.character(y)))
-
-
-
-median_temp <- collected_sf %>% 
-  rename(temp = LC08_CU_029007_20190830_20190919_C01_V01_ST) %>% 
-  group_by(coords) %>% 
-  summarise(median_temp = k_to_f(median(temp)/10)) %>% 
-  separate(coords, into = c("x", "y"), sep = ", ") %>% 
-  mutate(x = as.numeric(x),
-         y = as.numeric(y))
-
-median_temp_sf <- st_as_sf(median_temp,  
-                           coords = c("x", "y"), 
-                           crs = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0") %>%
-  st_transform("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0")
-
-# As seen below, distribution of points seems pretty normal, slight tail on the 
-# left, or possibly even an overlapping of two distributions, driven by var-
-# iables about which we don't have access to information.
-ggplot(median_temp_sf, aes(x = median_temp)) +
-  geom_histogram()
-
-
-
-# Z-Scores
-#' because distribution is relatively normal, we're electing to go with z-score
-#' calculation, so as to represent the distribution accurately without relying
-#' on Fahrenheit values
-
-# (value - mean)/stdev
-
-median_temp_sf$zscore <- scale(median_temp_sf$median_temp)
-
-# export median temp shapefile
-st_write(median_temp_sf, paste0(getwd(),'/data/median_satellite_surface_temperatures.geojson'))
-
-
-# Heat Map ----------------------------------------------------------------
-
-
-#convert to spatial for sp.kde
-median_temp_sp <- as(median_temp_sf, "Spatial")
-
-# Use kernel density estimate (kde) to create heatmap of city; using higher
-# row/column values for a resolution that better fits the scale of the data.
-kde_heat <- sp.kde(x = median_temp_sp, y = median_temp_sp$zscore,  
-                   nr = 600, nc = 600)
-plot(kde_heat)
-
-#write output
-writeRaster(kde_heat, filename="data/output/kde_heatmap.tif", format = "GTiff", overwrite=TRUE)
-
-
-# crop this new raster to nyc
-nyc1 <- st_transform(nyc, projection(kde_heat))
-
-
-#crop & mask the raster files to poylgon extent/boundary
-kde_heat_masked <- mask(kde_heat, nyc1)
-kde_heat_crop <- crop(kde_heat_masked, nyc1)
-
-#read & save raster for qgis
-q<- raster(paste0(getwd(), "bw_code/data/output/kde_heatmap.tif"))
-
-# Leaflet Map -------------------------------------------------------------
-
-
-# # Filter for hotspots
-# heat_sf <- median_temp_sf %>% 
-#   filter(zscore >= 2)
-# 
-# # shows what percentage of data we'll be using; flexible, depending on how much
-# # you want to see.
-# nrow(heat_sf)/nrow(median_temp_sf)
-
-pal_rev <- rev(colorRamps::matlab.like(15))
-heat_pal <- colorNumeric(rev(colorRamps::matlab.like(15)), values(kde_heat_crop),
-                         na.color = "transparent")
-
-
-leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
-  addProviderTiles('CartoDB.Positron') %>%
-  addRasterImage(kde_heat_crop, colors = heat_pal, opacity = 0.4) 
-
-# %>% 
-#   addLegend(pal = pal, values = values(r),
-#           title = "Surface temp")
-
-
+#not coverting to sf
+s <- stack(august_30_19_cropped, july_10_18_cropped, sept_22_19_cropped)
+#getting the median values into a raser and saving them
+med_raster <- calc(s, fun = median, na.rm = T)
+writeRaster(med_raster,filename = paste0(getwd(), '/data/med_raster.tif'))
+#copy
+md<-med_raster
+# centering the values, zscore, saving file
+md@data@values<- scale(md@data@values)
+writeRaster(md,filename = paste0(getwd(), '/data/md_raster.img'))
+plot(md)
 
 # theme setting ---------------
 # theme_ipsum(base_family = "Arial Narrow", base_size = 11.5,
