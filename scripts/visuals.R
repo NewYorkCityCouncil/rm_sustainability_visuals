@@ -11,6 +11,7 @@ library(webshot)
 library(lubridate)
 #webshot::install_phantomjs()
 
+
 options(scipen = 999)
 # SOC SUSTAINABILITY - BACKGROUND SECTION: EVIDENCE OF CLIMATE CHANGE --------------
 
@@ -374,7 +375,7 @@ nodes$group <- as.factor(
 my_color <- 'd3.scaleOrdinal() .domain(["LF_grey","RD_green", "Total", "LF_dgrey2", 
 "RD_dgreen","LF_dgreen2","LF_dgrey", "LF_dgreen"]) .range(["#CACACA","#a0e2ce", "#F59F00","#666666", "#12B886", "#095c43","#666666", "#095c43"])'
 
-## Add text to label
+## Add text to label - dont run for website version
 links$per <- paste0(links$value, "%")
 nodes$txt<- c(paste(as.vector(nodes$name[1]),'3.1 million tons', sep = ": "),
               paste(as.vector(nodes$name[2:nrow(nodes)]),
@@ -394,8 +395,23 @@ p <- sankeyNetwork(Links = links, Nodes = nodes,
                    nodePadding = 20, width=800, height=650,
                    margin = list("right"=200))
 
+
 p
 
+### remove value from repeating
+p <-  onRender(
+    p,
+    paste0('
+        function(el,x){
+        
+var link = d3.selectAll(".link");
+link.select("title").select("body")
+        .html(function(d) { return "<pre>" + d.source.name + " \u2192 " + d.target.name +
+           "<pre>"; });
+
+        }
+        ')
+  )
 #move label to the left
 p <-
   onRender(
@@ -410,6 +426,7 @@ p <-
         }
         ')
   )
+
 p
 p <- htmlwidgets::prependContent(p, htmltools::tags$div(HTML(
   paste(tags$span(style="font-family:Georgia;font-size:16px;font-weight: bold;", "NYC's Residential Waste Composition & Potential for Landfill Diversion"), sep = ""))))
