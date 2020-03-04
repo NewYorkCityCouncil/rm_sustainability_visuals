@@ -9,6 +9,8 @@ library(htmlwidgets)
 library(htmltools)
 library(webshot)
 library(lubridate)
+library(plotly)
+library(chartjs)
 #webshot::install_phantomjs()
 
 
@@ -442,58 +444,6 @@ webshot(url=paste0(getwd(),"/visuals/waste_flow.html"),
         delay = 0.5, debug = TRUE, zoom = 2, vheight = 650, vwidth = 800)
 
 
-# waste over time normalized by pop ---------
-w2000<-w[w$year>=2000,]
-w2000 <- w2000 %>%
-  group_by(year) %>%
-  summarize(Landfill = round(sum(refusetonscollected,na.rm = TRUE),2), 
-            Paper = round(sum(papertonscollected,na.rm = TRUE),2),
-            `Metal, Glass, Plastics`= round(sum(mgptonscollected,na.rm = TRUE),2),
-            `Xmas Trees`= round(sum(xmastreetons,na.rm = TRUE),2),
-            `Res. Organics`= round(sum(resorganicstons,na.rm = TRUE),2),
-            `School Organics`= round(sum(schoolorganictons,na.rm = TRUE),2),
-            `Leaves Organics`= round(sum(schoolorganictons,na.rm = TRUE),2)
-  )
-w2000$total<-round(rowSums(w2000[,-1]))
-
-#add pop numbers
-w2000$pop <-
-  w2000$percapita <-w2000$total/w2000$percapita*100
-
-#plot
-p <- w2000 %>%
-  ggplot(aes(x=year, y=percapita)) + 
-  xlab("Year") + ylab("Percent")+
-  #geom_line(color="grey") +
-  # geom_text(# Filter data first
-  #  aes(label=label), nudge_y = 50) +
-  geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=1) +
-  geom_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6") +
-  scale_x_continuous(waiver(), 
-                     breaks = as.numeric(w2000$year), 
-                     labels = as.numeric(w2000$year), 
-                     limits=c(2000,2019)) +
-  # scale_y_continuous(limit=c(-1,NA),
-  #                    oob=squish,
-  #                    breaks=seq(-1,2,0.5),
-  #                    labels=seq(-1,2,0.5))+
-  theme_ipsum(axis_title_just = "mc", 
-              base_size = 8,
-              axis_title_size = 11,
-              axis_text_size = 10) +
-  theme(legend.position="none",
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        text = element_text(family = "Open Sans"),
-        plot.title = element_text(family = "Georgia",size = 14),
-        axis.text.x = element_text(angle = 90),
-        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
-        axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
-  ggtitle("NYC Waste Per Capita from 2000 to 2019",
-          paste("How much warmer than average the most recent year was globally")) +
-  labs(caption = "DSNY Monthly Tonnage, ACS 1-Year Estimates & Census")
-
-ggsave("/visuals/Global Temperature Rise.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 
 ## waste over time normalized by pop ---------
 w2000<-w[w$year>=2000,]
@@ -526,17 +476,15 @@ pop <- data.frame(
 #leave out 2020 not complete year yet
 w2000=w2000[-nrow(w2000),]
 w2000$pop <- pop[pop$Year>=2000,]$NYC_Pop
-w2000$percapita <-(w2000$total/w2000$pop)*100
+w2000$Rate <-round((w2000$total/w2000$pop)*100,2)
 
 #plot
 p <- w2000 %>%
-  ggplot(aes(x=year)) + 
-  xlab("Year") + ylab("Tonnage Per Capita (%)")+
-  #geom_line(color="grey") +
-  # geom_text(# Filter data first
-  #  aes(label=label), nudge_y = 50) +
-  geom_point(aes(y=percapita), shape=21, color="#2F56A6", fill="#2F56A6", size=2) +
-  geom_line(aes(y=percapita), color="#2F56A6", size=1) +
+  ggplot(aes(x=year, y=Rate)) + 
+  xlab("Year") + ylab("Tonnage/Population (%)") +
+  geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=2) +
+  geom_line(color="#2F56A6", size=0.8) +
+  #geom_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6", method = 'lm') +
   scale_x_continuous(waiver(), 
                      breaks = as.numeric(w2000$year), 
                      labels = as.numeric(w2000$year), 
@@ -557,14 +505,17 @@ p <- w2000 %>%
         axis.text.x = element_text(angle = 90),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
-  annotate(geom="text", x=as.Date("2017-01-01"), y=20089, 
-           label="Bitcoin price reached 20k $\nat the end of 2017") +
-  annotate(geom="point", x=as.Date("2017-12-17"), y=20089, size=10, shape=21, fill="transparent") 
-ggtitle("NYC Waste Per Capita from 2000 to 2019",
-        paste("How much warmer than average the most recent year was globally")) +
+ # annotate(geom="text", x=as.Date("2017-01-01"), y=20089, 
+  #         label="Bitcoin price reached 20k $\nat the end of 2017") +
+  #annotate(geom="point", x=as.Date("2017-12-17"), y=20089, size=10, shape=21, fill="transparent") 
+ggtitle("NYC Residential Waste Rate from 2000 to 2019") +
   labs(caption = "DSNY Monthly Tonnage, ACS 1-Year Estimates & Census")
 
-ggsave("/visuals/Global Temperature Rise.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
+fig <- ggplotly(p)
+htmlwidgets::saveWidget(ggplotly(p), paste0(getwd(),"/docs/nycwaste.html"))
+
+
+
 # for gqis mapping ------
 
 library(raster)
