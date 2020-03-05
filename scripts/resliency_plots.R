@@ -23,7 +23,9 @@ svi_sf <- left_join(svi, cd, by = "boro_cd") %>% st_as_sf() %>% st_transform("+p
 # mapview::mapview(svi_sf, z ="fp")
 
 
-ggplot(svi, aes(x=fp)) + geom_histogram() + theme_bw()
+p <- ggplot(svi, aes(x=fp)) + geom_histogram() + theme_bw()
+ggplotly(p)
+
 summary(svi$fp)
 plot(ecdf(svi$fp))
 

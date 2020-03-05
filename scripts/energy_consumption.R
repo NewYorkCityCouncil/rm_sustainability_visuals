@@ -68,10 +68,12 @@ ggdonutchart(nys, x="amount",  label = "label",
 
 
 #### us
+cols <- c("#D05D4E","#F59F00","#228AE6","#23417D")
 
 # Us annual 
-amount <- c(36, 11, 8, 13, 31)
-Source <- c("Petroleum", "Renewables", "Nuclear", "Coal", "Natural Gas")
+amount <- c(8.25, 2.75, 8, 81)
+Source <- c("Renewables", "Hydropower", "Nuclear", "Fossil Fuels")
+
 data <- data.table(amount, Source)
 data[, label := paste(amount, "%", sep="")]
 
@@ -86,6 +88,6 @@ ggdonutchart(data, x="amount",  label = "label",
                                           text = element_text(family = "Open Sans"),
                                           plot.title = element_text(family = "Georgia",size = 14)) +
   scale_fill_manual(values=cols) +
-  labs(title = "      US Energy Consumption, 2018",
+  labs(title = "      US Energy Consumption, 2017",
        subtitle = "",
        caption = "Source: Energy Information Administration, \nEnergy Data System")
