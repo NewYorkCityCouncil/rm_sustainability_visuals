@@ -601,18 +601,18 @@ curbside_pal <- colorFactor(palette = c("#007534", "#1D5FD6","#B63F26", "#846126
   levels = unique(curbside_pickup_shape$curbside_pickup_status))
 
 
-html_legend <- "<small>DSNY Organics Rollout & Monthly Tonnage Data</small>"
+html_legend <- "<small>Source: DSNY Organics Rollout & Monthly Tonnage Data</small>"
 
 
 lf <-
   leaflet(curbside_pickup_shape) %>% 
   addProviderTiles("CartoDB.Positron") %>% 
   addPolygons(color = ~curbside_pal(curbside_pickup_status), popup = curbside_pop,
-              weight = .8) %>% 
+              weight = .8, label = curbside_pickup_shape$boro_cd) %>% 
   addLegend(pal = curbside_pal, values = curbside_pickup_shape$curbside_pickup_status,
             position = "topright", title = "Curbside Composting") %>% 
   addControl(html = html_legend, position = "bottomright") %>% 
-  setView(lng = -73.912285, lat = 40.694678, zoom = 10)
+  setView(lng = -73.912285, lat = 40.694678, zoom = 11)
 
 
 saveWidget(lf, file=paste0(getwd(),"/docs/curbside_composting.html"))
