@@ -597,8 +597,11 @@ curbside_pop <- paste0("<h3><font face='Open Sans'><strong>Community Board:</str
               "<strong>Leaves Organics:</strong> ", curbside_pickup_shape$`Leaves Organics`, 
               " tons (2019)</font>")
 
-curbside_pal <- colorFactor(palette = c("#007534", "#1D5FD6","#B63F26", "#846126"),
+curbside_pal <- colorFactor(palette = c('#12B886', '#228AE6','#23417D', "#005d29"),
   levels = unique(curbside_pickup_shape$curbside_pickup_status))
+
+curbside_pal2 <- colorFactor(palette = c('#666666','#666666','#b5b5b5','#CACACA'),
+                            levels = unique(curbside_pickup_shape$curbside_pickup_status))
 
 
 html_legend <- "<small>Source: DSNY Organics Rollout & Monthly Tonnage Data</small>"
@@ -607,8 +610,10 @@ html_legend <- "<small>Source: DSNY Organics Rollout & Monthly Tonnage Data</sma
 lf <-
   leaflet(curbside_pickup_shape) %>% 
   addProviderTiles("CartoDB.Positron") %>% 
-  addPolygons(color = ~curbside_pal(curbside_pickup_status), popup = curbside_pop,
-              weight = .8, label = curbside_pickup_shape$boro_cd) %>% 
+  addPolygons(fillColor = ~curbside_pal(curbside_pickup_status), 
+              popup = curbside_pop, color = ~curbside_pal2(curbside_pickup_status),
+              weight = 1, label = curbside_pickup_shape$boro_cd, 
+              opacity = 1, fillOpacity = .4) %>% 
   addLegend(pal = curbside_pal, values = curbside_pickup_shape$curbside_pickup_status,
             position = "topright", title = "Curbside Composting") %>% 
   addControl(html = html_legend, position = "bottomright") %>% 
