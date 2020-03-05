@@ -515,6 +515,107 @@ ggtitle("NYC Residential Waste Rate from 2000 to 2019") +
 
 htmlwidgets::saveWidget(ggplotly(p, tooltip = c('x', 'text', 'label')), paste0(getwd(),"/docs/nycwaste.html"))
 
+#updating curbside oragnics pickup ------
+# Curbside Pickup Mapping -------------------------------------------------
+
+
+# source: https://data.cityofnewyork.us/City-Government/Community-Districts/yfnk-k7r4
+cds <- read_sf(paste0(getwd(), '/data/Community_Districts.geojson')) %>% 
+  st_simplify(dTolerance = 0.001) %>% 
+  select(boro_cd, geometry)
+
+# sources: https://www1.nyc.gov/assets/dsny/site/services/food-scraps-and-yard-waste-page/residents/current-organics-rollout,
+# https://www1.nyc.gov/assets/dsny/site/services/food-scraps-and-yard-waste-page/2018-organics-rollout
+manhattan <- rep(101:112)
+bronx <- rep(201:212)
+brooklyn <- rep(301:318)
+queens <- rep(401:414)
+staten_island <- rep(501:503)
+
+
+yes <- c(208, 210:212, 301, 302, 306, 307, 310:313, 315, 316, 402, 405, 407:411, 413, 414)
+
+enroll <- c(101:112, 201:207, 209)
+
+partial <- 501
+
+partial_text <- "Partial Availability" #"Available in Castleton Corners, Graniteville, Mariners Harbor, Port Richmond, West Brighton, Westerleigh"
+
+
+curbside_pickup <- tibble(
+  boro_cd = c(manhattan, bronx, brooklyn, queens, staten_island)
+) %>% 
+  mutate(curbside_pickup_status = ifelse(boro_cd %in% yes,
+                                         "Available",
+                                         ifelse(boro_cd %in% enroll,
+                                                "Available with Enrollment",
+                                                ifelse(boro_cd == partial,
+                                                       partial_text,
+                                                       "Not Available"))))
+#matching boros
+curbside_pickup$boro_cd=as.character(curbside_pickup$boro_cd)
+
+#adding waste info for each cd
+w2019<-w[w$year>=2019,]
+#add cd column
+w2019$boro_cd<-paste0(w2019$borough_id, w2019$communitydistrict)
+w2019 <- w2019 %>%
+  group_by(year, boro_cd) %>%
+  summarize(Landfill = round(sum(refusetonscollected,na.rm = TRUE)), 
+            Paper = round(sum(papertonscollected,na.rm = TRUE)),
+            `Metal, Glass, Plastics`= round(sum(mgptonscollected,na.rm = TRUE)),
+            `Xmas Trees`= round(sum(xmastreetons,na.rm = TRUE)),
+            `Res. Organics`= round(sum(resorganicstons,na.rm = TRUE)),
+            `School Organics`= round(sum(schoolorganictons,na.rm = TRUE)),
+            `Leaves Organics`= round(sum(schoolorganictons,na.rm = TRUE))
+  )
+
+curbside_pickup2<- left_join(curbside_pickup, w2019) 
+
+
+# join and get rid of non-cd geometry
+curbside_pickup_shape <- left_join(cds, curbside_pickup2) %>% 
+  filter(!is.na(curbside_pickup_status)) %>% 
+  st_transform('+proj=longlat +datum=WGS84')
+
+
+
+curbside_pop <- paste0("<h3><font face='Open Sans'><strong>Community Board:</strong> ", 
+                       curbside_pickup_shape$boro_cd, "<br>",
+              "<strong>Curbside Pickup:</strong> ", curbside_pickup_shape$curbside_pickup_status, 
+              "</h3>",
+              "<strong>Landfill:</strong> ", curbside_pickup_shape$Landfill, " tons (2019)", "<br>",
+              "<strong>Paper:</strong> ", curbside_pickup_shape$Paper, " tons (2019)", "<br>",
+              "<strong>Metal, Glass, Plastics:</strong> ", 
+              curbside_pickup_shape$`Metal, Glass, Plastics`, " tons (2019)", "<br>",
+              "<strong>Xmas Trees:</strong> ", curbside_pickup_shape$`Xmas Trees`, 
+              " tons (2019)", "<br>",
+              "<strong>Res. Organics:</strong> ", curbside_pickup_shape$`Res. Organics`, 
+              " tons (2019)", "<br>",
+              "<strong>School Organics:</strong> ", curbside_pickup_shape$`School Organics`, 
+              " tons (2019)", "<br>",
+              "<strong>Leaves Organics:</strong> ", curbside_pickup_shape$`Leaves Organics`, 
+              " tons (2019)</font>")
+
+curbside_pal <- colorFactor(palette = c("#007534", "#1D5FD6","#B63F26", "#846126"),
+  levels = unique(curbside_pickup_shape$curbside_pickup_status))
+
+
+html_legend <- "<small>DSNY Organics Rollout & Monthly Tonnage Data</small>"
+
+
+lf <-
+  leaflet(curbside_pickup_shape) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(color = ~curbside_pal(curbside_pickup_status), popup = curbside_pop,
+              weight = .8) %>% 
+  addLegend(pal = curbside_pal, values = curbside_pickup_shape$curbside_pickup_status,
+            position = "topright", title = "Curbside Composting") %>% 
+  addControl(html = html_legend, position = "bottomright") %>% 
+  setView(lng = -73.912285, lat = 40.694678, zoom = 10)
+
+
+saveWidget(lf, file=paste0(getwd(),"/docs/curbside_composting.html"))
 
 
 # for gqis mapping ------
