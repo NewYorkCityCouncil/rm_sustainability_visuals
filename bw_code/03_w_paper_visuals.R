@@ -97,38 +97,28 @@ annual_precip <- as_tibble(precip) %>%
   mutate(year = as.numeric(year),
          annual = as.numeric(annual))
 
-annual_precip <- annual_precip[annual_precip$year>=1900,]
-
-summary(lm(annual ~ year, data=annual_precip))
-
-p <- annual_precip %>% 
-  ggplot(aes(x=year, y=annual)) +
-  geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=1) +
-  stat_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6", method = "lm") +
+ggplot(annual_precip, aes(x=year, y=annual)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
   ylab("Annual Precipitation (Inches)") +
   xlab("Year") +
-  scale_y_continuous(limit=c(20,85),
-                     oob=squish,
-                     breaks=waiver(),
-                     labels=waiver()) +
-  scale_x_continuous(breaks = c(seq(1870,2019,10),2019)) +
-  theme_ipsum(axis_title_just = "mc", 
-              base_size = 8,
-              axis_title_size = 11,
-              axis_text_size = 10.5) +
+  # theme_ipsum(axis_title_just = "mc", 
+  #             base_size = 8,
+  #             axis_title_size = 11,
+  #             axis_text_size = 10) +
   theme(legend.position="none",
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         #text = element_text(family = "Open Sans"),
         plot.title = element_text(family = "Georgia",size = 14),
-        axis.text.x = element_text(angle = 0),
+        axis.text.x = element_text(angle = 90),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
-  ggtitle("Annual Precipitation from 1990 to 2019", 
-          "Precipitation has been increasing 0.74 inches per decade.") +
-  labs(caption = "NOAA United States Historical Climatology Network")
+  ggtitle("Global Temperature Rise",
+          paste("How much warmer than average the most recent year was globally")) +
+  labs(tag = "Figure 2.", caption = "NASA's Goddard Institute for Space Studies (GISS)")
 
-ggsave("/visuals/Annual_Precipitation.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
+ggsave("Global Temperature Rise.png", plot = p, path = "/Users/romartinez/Desktop/sshfs/rm_sustainability_visuals/visuals/", width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 
@@ -283,7 +273,7 @@ leaflet(flood_points_sf_filtered,
 
 
 ## After speaking with analysts, we're customizgin what granularity of information is presented
-name <- c('Clean Paper, Cardboard', "Metal, Glass, Plastic, Cartons", "Organics", "Other", "Textiles", "Divertable Materials")
+name <- c('Clean Paper, Cardboard', "Metal, Glass, Plastic, Cartons", "Organics", "Other", "Textiles", "Diverted Materials")
 percent <- c(17,17,34,23,6,3)
 
 #sanity check
@@ -293,63 +283,38 @@ waste_custom <- data.table(name, percent)
 
 setorder(waste_custom, cols = percent)
 
-waste_custom=waste_custom[order(waste_custom$percent, decreasing = TRUE),]
-
-#barplot_colors <- c("#D05D4E","#F59F00","#228AE6","#12B886","#23417D","#A07952")
-
-barplot_colors <- c('#e7aea6','#e29d94','#de8d83','#d97d71','#d46d5f','#d05d4e' )
 
 
-p <-
-ggplot(waste_custom, 
-       aes(x=reorder(waste_custom$name, waste_custom$percent), 
-           y=sort(waste_custom$percent, decreasing = TRUE),
-           fill=reorder(waste_custom$name, waste_custom$percent))) + 
+barplot_colors <- c("#D05D4E","#F59F00","#228AE6","#12B886","#23417D","#A07952")
+              #  ,"#82C91E","#CACACA","#2F56A6","#BE4BDB", "#B63F26")
+
+
+
+
+ggplot(waste_custom, aes(x=reorder(waste_custom$name, waste_custom$percent), y=sort(waste_custom$percent, decreasing = TRUE),
+           fill=as.factor(name))) + 
 geom_bar(stat = "identity") +
 coord_flip() +
 scale_fill_manual(values=barplot_colors) +
-xlab("Materials") + ylab("Percent")+
+xlab("Tonnage") + ylab("Material")+
 geom_text(# Filter data first
-  aes(label=paste0(percent, '%')), nudge_y = 1, size=3.5) +
-theme_ipsum(axis_title_just = "mc",
-            base_size = 8,
-            axis_title_size = 11,
-            axis_text_size = 10,
-            caption_size = 10,
-            plot_margin = margin(30, 30, 30, 30),) +
+  aes(label=paste0(percent, '%')), nudge_y = 5, size=3) +
+# theme_ipsum(axis_title_just = "mc",
+#             base_size = 8,
+#             axis_title_size = 11,
+#             axis_text_size = 10) +
 theme(legend.position="none",
       panel.grid.major.y = element_blank(),
       panel.grid.minor.y = element_blank(),
-      text = element_text(family = "Open Sans"),
+      # text = element_text(family = "Open Sans"),
       plot.title = element_text(family = "Georgia",size = 14),
       axis.text.y = element_text(margin = margin(t = 0, r = -16, b = 0, l = 0)),
       axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
       axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
-ggtitle("Landfill Subset: NYC Waste Composition 2017", "All of the waste currently going to landfill can potentially be recycled or diverted in the following ways") +
-labs(caption = "2017 NYC Residential, School, and NYCHA Waste Characterization Study")
+ggtitle("NYC Waste Composition 2017, Landfill Subset",) +
+labs(caption = "Source: New York City Department of Sanitation")
 
-ggsave("/bw_images/landfill_subset_categorizaiton.png", plot = p, path = getwd(), width = 9, height = 5, units = "in", dpi = 300)
-
-
-
-
-
-
-
-ggdonutchart(waste, x="x2017",  label = "share", 
-             fill = "material", color = "white", lab.adjust = 0, 
-             lab.pos = "in", lab.font = c(size=3)) + 
-  theme(legend.position="right",
-        panel.grid.major.y = element_blank(), 
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        #text = element_text(family = "Open Sans"),
-        plot.title = element_text(family = "Georgia",size = 14)) +
-  scale_fill_manual(values=donut_cols) +
-  labs(title = "       New York City Waste Categorization, 2017 (Subset of Landfill Data)",
-       subtitle = "",
-       caption = "Source: New York City Department of Sanitation")
+ggsave("/bw_images/landfill_subset_categorizaiton.png", plot = p, path = getwd(), width = 8.5, height = 5, units = "in", dpi = 300)
 
 
 
