@@ -476,18 +476,19 @@ pop <- data.frame(
 #leave out 2020 not complete year yet
 w2000=w2000[-nrow(w2000),]
 w2000$pop <- pop[pop$Year>=2000,]$NYC_Pop
-w2000$Rate <-round((w2000$total/w2000$pop)*100,2)
+names(w2000)[c(1,9)]<-c('Year','Tonnage')
+w2000$Rate <-round((w2000$Tonnage/w2000$pop)*100,2)
 
 #plot
 p <- w2000 %>%
-  ggplot(aes(x=year, y=Rate)) + 
+  ggplot(aes(x=Year, y=Rate, group = 1, label = Tonnage, text = paste0('Rate: ',Rate, '%'))) + 
   xlab("Year") + ylab("Tonnage/Population (%)") +
   geom_point(shape=21, color="#2F56A6", fill="#2F56A6", size=2) +
   geom_line(color="#2F56A6", size=0.8) +
   #geom_smooth(se=FALSE, fullrange=TRUE,color="#2F56A6", method = 'lm') +
   scale_x_continuous(waiver(), 
-                     breaks = as.numeric(w2000$year), 
-                     labels = as.numeric(w2000$year), 
+                     breaks = as.numeric(w2000$Year), 
+                     labels = as.numeric(w2000$Year), 
                      limits=c(2000,2019)) +
   scale_y_continuous(limit=c(30,45),
                      oob=squish,
@@ -511,8 +512,8 @@ p <- w2000 %>%
 ggtitle("NYC Residential Waste Rate from 2000 to 2019") +
   labs(caption = "DSNY Monthly Tonnage, ACS 1-Year Estimates & Census")
 
-fig <- ggplotly(p)
-htmlwidgets::saveWidget(ggplotly(p), paste0(getwd(),"/docs/nycwaste.html"))
+
+htmlwidgets::saveWidget(ggplotly(p, tooltip = c('x', 'text', 'label')), paste0(getwd(),"/docs/nycwaste.html"))
 
 
 
