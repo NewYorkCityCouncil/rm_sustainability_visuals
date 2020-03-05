@@ -643,7 +643,7 @@ august_30_19_tif <- '/Users/romartinez/Network Shares/geodata/DATABASE/Landsat/l
 
 sept_22_19_tif <- '/Users/romartinez/Network Shares/geodata/DATABASE/Landsat/landsat_final_used_values copy/LC08_CU_029007_20190922_20191001_C01_V01_ST.tif'
 
-nyc <-st_read("/Users/romartinez/Desktop/untitled/Data_Products/snap_map/data/Borough Boundaries.geojson") %>%
+nyc <-st_read("/home/rose/snap_map/data/Borough Boundaries.geojson") %>%
   st_transform("+proj=longlat +datum=WGS84")
 
 
@@ -680,6 +680,21 @@ md<-med_raster
 md@data@values<- scale(md@data@values)
 writeRaster(md,filename = paste0(getwd(), '/data/md_raster.img'))
 plot(md)
+
+
+#reading in lidar for tree canopy
+tc <-raster('/home/rose/LiDAR/Land_Cover/NYC_2017_LiDAR_LandCover.img')
+#reproject nyc polygon to raster projection
+nyc1 <- st_transform(nyc, projection(tc))
+
+#filter values with 1 or 2 (tree canopy & grass)
+tc[which(tc %in% not_rm == TRUE)] <- NA 
+not_rm=c(3,4,5,6,7,8)
+
+
+#crop & mask the raster files to poylgon extent/boundary
+august_30_19_masked <- mask(august_30_19_raster, nyc1)
+august_30_19_cropped <- crop(august_30_19_masked, nyc1)
 
 # theme setting ---------------
 # theme_ipsum(base_family = "Arial Narrow", base_size = 11.5,
