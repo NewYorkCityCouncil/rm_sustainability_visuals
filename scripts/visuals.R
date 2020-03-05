@@ -688,7 +688,7 @@ tc <-raster('/home/rose/LiDAR/Land_Cover/NYC_2017_LiDAR_LandCover.img')
 nyc1 <- st_transform(nyc, projection(tc))
 
 #filter values with 1 or 2 (tree canopy & grass)
-tc[which(tc %in% not_rm == TRUE)] <- NA 
+tc[tc != 3] <- NA 
 not_rm=c(3,4,5,6,7,8)
 
 
