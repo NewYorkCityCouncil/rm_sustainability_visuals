@@ -31,7 +31,7 @@
 #### Difficulties in Hiring Bar Chart
 - [2018 NYSDERA New York Clean Energy Industry Report](https://www.nyserda.ny.gov/About/Publications/New-York-Clean-Energy-Industry-Report)
 
-### Methodology 
+## Methodology 
 
 ### NYC 2019 Summer Surface Temperature Map
 
