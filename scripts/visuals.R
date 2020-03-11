@@ -11,6 +11,7 @@ library(webshot)
 library(lubridate)
 library(plotly)
 library(chartjs)
+library(ClusterR)
 #webshot::install_phantomjs()
 
 
@@ -394,8 +395,8 @@ p <- sankeyNetwork(Links = links, Nodes = nodes,
                    fontFamily = "Open Sans",
                    nodeWidth = 15 , colourScale = my_color,
                    LinkGroup = "group", NodeGroup = "group",
-                   nodePadding = 20, width=800, height=650,
-                   margin = list("right"=200))
+                   nodePadding = 20, width=950, height=800,
+                   margin = list("right"=300))
 
 
 p
@@ -438,10 +439,10 @@ p<-htmlwidgets::appendContent(p,htmltools::tags$div(
              tags$span(style="font-family:Open Sans; font-size:10px;", "*Other: Items that currently have no or limited options for beneficial reuse"), sep = ""))))
 
 p
-saveWidget(p,file=paste0(getwd(),"/visuals/waste_flow.html"))
-webshot(url=paste0(getwd(),"/visuals/waste_flow.html"), 
-        file=paste0(getwd(),"/visuals/waste_flow.png"), 
-        delay = 0.5, debug = TRUE, zoom = 2, vheight = 650, vwidth = 800)
+saveWidget(p,file=paste0(getwd(),"/docs/waste_flow.html"))
+webshot(url=paste0(getwd(),"/docs/waste_flow.html"), 
+        file=paste0(getwd(),"/docs/waste_flow.png"), 
+        delay = 0.5, debug = TRUE, zoom = 2, vheight = 800, vwidth = 950)
 
 
 
@@ -608,7 +609,7 @@ html_legend <- "<small>Source: DSNY Organics Rollout & Monthly Tonnage Data</sma
 
 
 lf <-
-  leaflet(curbside_pickup_shape) %>% 
+  leaflet(curbside_pickup_shape, options = leafletOptions(minZoom = 11, maxZoom = 14)) %>% 
   addProviderTiles("CartoDB.Positron") %>% 
   addPolygons(fillColor = ~curbside_pal(curbside_pickup_status), 
               popup = curbside_pop, color = ~curbside_pal2(curbside_pickup_status),
@@ -617,10 +618,12 @@ lf <-
   addLegend(pal = curbside_pal, values = curbside_pickup_shape$curbside_pickup_status,
             position = "topright", title = "Curbside Composting") %>% 
   addControl(html = html_legend, position = "bottomright") %>% 
-  setView(lng = -73.912285, lat = 40.694678, zoom = 11)
+  setView(lng = -73.912285, lat = 40.694678, zoom= 10)
 
 
 saveWidget(lf, file=paste0(getwd(),"/docs/curbside_composting.html"))
+
+
 
 
 # for gqis mapping ------
@@ -688,13 +691,38 @@ tc <-raster('/home/rose/LiDAR/Land_Cover/NYC_2017_LiDAR_LandCover.img')
 nyc1 <- st_transform(nyc, projection(tc))
 
 #filter values with 1 or 2 (tree canopy & grass)
-tc[tc != 3] <- NA 
-not_rm=c(3,4,5,6,7,8)
+# m=matrix(c(1,2,3,4,5,6,7,8)) test
+filt <- function(x) {
+  x[x !=1 & x != 2]<-NA
+  return(x)
+}
 
+#run process on more than one core
+beginCluster(4)
+filter_tc <- clusterR(tc, fun = filt)
+
+endCluster()
+
+
+s1<-calc(m, filt)
+
+
+
+rc<-aggregate(tc,100000, filename=(paste0(getwd(), '/data/aggregatefile.tif')))
 
 #crop & mask the raster files to poylgon extent/boundary
 august_30_19_masked <- mask(august_30_19_raster, nyc1)
 august_30_19_cropped <- crop(august_30_19_masked, nyc1)
+
+
+############
+pal <- colorNumeric(c("#005d29", "#12b886"), c(1,2))
+
+leaflet() %>% addTiles() %>% addProviderTiles("CartoDB.Positron") %>% 
+  addRasterImage(tc, colors = pal, opacity = 0.8, method = 'ngb') %>%
+  addLegend(pal = pal, values = values(tc), 
+            title = "Landcover") %>% 
+
 
 # theme setting ---------------
 # theme_ipsum(base_family = "Arial Narrow", base_size = 11.5,
