@@ -73,5 +73,6 @@
 
 #### Normalization
 - round lat/long for normalization - 3 decimal places is up to 110 meters
-- Like NPCC viz 2.11, normalizing street flooding complaints by number of 
+- [New York City Panel on Climate Change 2019 Report Chapter 2: New Methods for Assessing Extreme Temperatures, Heavy Downpours, and Drought](https://nyaspubs.onlinelibrary.wiley.com/doi/10.1111/nyas.14007)
+- Like NPCC figure 2.11, normalizing street flooding complaints by number of 'all 311 calls within the same area'
 - complaints relative to a space, as some areas are known to submit more complaints than others. Given 3400 complaints across city, 110 m may be appropriate range
